@@ -475,7 +475,7 @@ export class SqliteBruv<
     if (this.loading) await this.loading;
     if (this._QueryMode) return { query, params } as any;
     if (this._logging) {
-      console.log({ query, params, single });
+      console.log({ query, params });
     }
     // local db
     if (this.test) {
@@ -501,10 +501,11 @@ export class SqliteBruv<
     } else {
       // Arkilian
       if (single === true) {
+        const data = await this.db.all(query, params);
         if (cacheName) {
-          return this.cacheResponse(this.db.all(query, params), cacheName);
+          return this.cacheResponse(data[0], cacheName);
         }
-        return this.db.all(query, params);
+        return data[0];
       }
       if (single === false) {
         if (cacheName) {

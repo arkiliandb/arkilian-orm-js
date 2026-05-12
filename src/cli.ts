@@ -25,8 +25,6 @@ import { readdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "path";
 import { config } from "dotenv";
 config({ quiet: true });
- 
-
 
 const MIGRATIONS_TABLE = "_bruv_migrations";
 const FOLDER = SqliteBruv.migrationFolder;
@@ -41,7 +39,7 @@ function resolveDb(schema: Schema[], dev: boolean): SqliteBruv {
       createMigrations: false,
     });
   }
-  const token = process.env["ARKILIAN_DB_TOKEN"]; 
+  const token = process.env["ARKILIAN_DB_TOKEN"];
   if (token) {
     return new SqliteBruv({
       schema,
@@ -88,8 +86,8 @@ async function ensureTable(db: SqliteBruv) {
   )`,
     [],
   );
-  const data = await db.raw(`SELECT * FROM ${MIGRATIONS_TABLE}`);
-  console.log({ data });
+  // const data = await db.from(MIGRATIONS_TABLE).where("id = ?", 1).getOne();
+  // console.log({ data });
 }
 
 async function getApplied(db: SqliteBruv): Promise<Set<string>> {
@@ -325,7 +323,7 @@ if (!cmd || args.includes("--help") || args.includes("-h")) {
 const schema = await loadSchema();
 const db = resolveDb(schema, sub === "dev");
 await ensureTable(db);
-await db.loading; 
+await db.loading;
 if (cmd === "migrate") {
   switch (sub) {
     case "dev":
