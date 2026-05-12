@@ -1,11 +1,10 @@
-import { SqliteBruv } from "./src/index.ts";
+import { Arkilian_orm } from "./src/index.ts";
 
 // Schema is auto-loaded from ./bruv/schema.prisma
-export const db = new SqliteBruv({
+export const db = new Arkilian_orm({
   localFile: "sample.sqlite",
   logging: true,
 });
- 
 
 // Insert
 await db
@@ -44,8 +43,7 @@ await db
   });
 
 // Get all users
-db
-  .from("users")
+db.from("users")
   .get()
   .then((changes) => {
     console.log({ changes });

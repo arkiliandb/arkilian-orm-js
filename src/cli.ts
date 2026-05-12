@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * SQLiteBruv CLI — Prisma-style migration workflow.
+ * Arkilian-orm CLI — Prisma-style migration workflow.
  *
  * Reads schema from `./prisma/schema.prisma` (PSL, single source of truth).
  * Reads connection info from env vars with local SQLite as default.
@@ -14,7 +14,7 @@
  */
 
 import {
-  SqliteBruv,
+  Arkilian_orm,
   Schema,
   getSchema,
   generateMigration,
@@ -27,13 +27,13 @@ import { config } from "dotenv";
 config({ quiet: true });
 
 const MIGRATIONS_TABLE = "_bruv_migrations";
-const FOLDER = SqliteBruv.migrationFolder;
-const SCHEMA_PATH = SqliteBruv.schemaFile;
+const FOLDER = Arkilian_orm.migrationFolder;
+const SCHEMA_PATH = Arkilian_orm.schemaFile;
 
 // --- Resolve DB connection from env vars ---
-function resolveDb(schema: Schema[], dev: boolean): SqliteBruv {
+function resolveDb(schema: Schema[], dev: boolean): Arkilian_orm {
   if (dev) {
-    return new SqliteBruv({
+    return new Arkilian_orm({
       schema,
       localFile: "./bruv/dev.db",
       createMigrations: false,
@@ -41,7 +41,7 @@ function resolveDb(schema: Schema[], dev: boolean): SqliteBruv {
   }
   const token = process.env["ARKILIAN_DB_TOKEN"];
   if (token) {
-    return new SqliteBruv({
+    return new Arkilian_orm({
       schema,
       token,
       createMigrations: false,
@@ -77,7 +77,7 @@ async function loadSchema(): Promise<Schema[]> {
 }
 
 // --- Migration helpers ---
-async function ensureTable(db: SqliteBruv) {
+async function ensureTable(db: Arkilian_orm) {
   await db.run(
     `CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,7 +90,7 @@ async function ensureTable(db: SqliteBruv) {
   // console.log({ data });
 }
 
-async function getApplied(db: SqliteBruv): Promise<Set<string>> {
+async function getApplied(db: Arkilian_orm): Promise<Set<string>> {
   await ensureTable(db);
   const rows: any = await db.raw(
     `SELECT name FROM ${MIGRATIONS_TABLE} ORDER BY applied_at`,
@@ -100,7 +100,7 @@ async function getApplied(db: SqliteBruv): Promise<Set<string>> {
 
 // --- Commands ---
 
-async function migrateDev(db: SqliteBruv, name: string, schema: Schema[]) {
+async function migrateDev(db: Arkilian_orm, name: string, schema: Schema[]) {
   if (!name) {
     console.error(
       "Error: Migration needs a name.\n  Usage: bun bruv migrate dev --name <name>",
@@ -110,7 +110,7 @@ async function migrateDev(db: SqliteBruv, name: string, schema: Schema[]) {
 
   const tempPath = "./bruv/.bruv_temp.sqlite";
   const cloned = schema.map((s) => s._clone());
-  const tempDb = new SqliteBruv({
+  const tempDb = new Arkilian_orm({
     schema: cloned,
     localFile: tempPath,
     createMigrations: false,
@@ -152,7 +152,7 @@ async function migrateDev(db: SqliteBruv, name: string, schema: Schema[]) {
   console.log(`✓ Applied migration: ${filename}`);
 }
 
-async function applyMigration(db: SqliteBruv, file: string) {
+async function applyMigration(db: Arkilian_orm, file: string) {
   await ensureTable(db);
   const sql = readFileSync(join(FOLDER, file), "utf8");
   const upSql = sql.split("-- --> down")[0].replace("-- --> up", "").trim();
@@ -170,7 +170,7 @@ async function applyMigration(db: SqliteBruv, file: string) {
   }
 }
 
-async function migrateDeploy(db: SqliteBruv) {
+async function migrateDeploy(db: Arkilian_orm) {
   await ensureTable(db);
   if (!existsSync(FOLDER)) return console.log("No migrations directory found.");
   const files = readdirSync(FOLDER)
@@ -195,7 +195,7 @@ async function migrateDeploy(db: SqliteBruv) {
   );
 }
 
-async function migrateReset(db: SqliteBruv) {
+async function migrateReset(db: Arkilian_orm) {
   await ensureTable(db);
   const last: any = await db.raw(
     `SELECT name FROM ${MIGRATIONS_TABLE} ORDER BY applied_at DESC LIMIT 1`,
@@ -229,7 +229,7 @@ async function migrateReset(db: SqliteBruv) {
   }
 }
 
-async function migrateStatus(db: SqliteBruv) {
+async function migrateStatus(db: Arkilian_orm) {
   await ensureTable(db);
   const files = existsSync(FOLDER)
     ? readdirSync(FOLDER)
@@ -251,10 +251,10 @@ async function migrateStatus(db: SqliteBruv) {
   console.log("");
 }
 
-async function dbPush(db: SqliteBruv, schema: Schema[]) {
+async function dbPush(db: Arkilian_orm, schema: Schema[]) {
   const tempPath = "bruv/.bruv_temp.sqlite";
   const cloned = schema.map((s) => s._clone());
-  const tempDb = new SqliteBruv({
+  const tempDb = new Arkilian_orm({
     schema: cloned,
     localFile: tempPath,
     createMigrations: false,
@@ -305,7 +305,7 @@ function getFlag(flag: string): string | undefined {
 }
 
 const HELP = `
-SQLiteBruv CLI
+Arkilian-orm CLI
 
 Usage:
   bun bruv migrate dev --name <name>   Create and apply a new migration

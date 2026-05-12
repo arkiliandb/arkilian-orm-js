@@ -2,7 +2,7 @@
  * Prisma Schema Language (PSL) parser for SQLite.
  *
  * Parses a schema.prisma file and returns Schema[] instances
- * compatible with SqliteBruv. Only handles SQLite-compatible types.
+ * compatible with Arkilian_orm. Only handles SQLite-compatible types.
  *
  * Supported PSL types → SQLite mapping:
  *   Int, BigInt        → INTEGER
@@ -13,7 +13,7 @@
  *   Bytes              → BLOB (stored as TEXT)
  *
  * Supported attributes:
- *   @id                → PRIMARY KEY (skipped from columns, handled by SqliteBruv)
+ *   @id                → PRIMARY KEY (skipped from columns, handled by Arkilian_orm)
  *   @unique            → UNIQUE
  *   @default(...)      → DEFAULT value
  *   @relation(...)     → REFERENCES (foreign key target)
@@ -61,7 +61,7 @@ function parseDefault(attr: string): (() => string) | undefined {
 
   // autoincrement — SQLite handles via INTEGER PRIMARY KEY, skip
   if (val === "autoincrement()") return undefined;
-  // uuid/cuid — handled by SqliteBruv's Id()
+  // uuid/cuid — handled by Arkilian_orm's Id()
   if (val === "uuid()" || val === "cuid()") return undefined;
   // now() → CURRENT_TIMESTAMP
   if (val === "now()") return () => "CURRENT_TIMESTAMP";
@@ -86,8 +86,13 @@ function parseRelation(attr: string): string | undefined {
   return undefined;
 }
 
-function isRelationField(typeName: string, allModelNames: Set<string>): boolean {
-  return allModelNames.has(typeName) || allModelNames.has(typeName.replace("[]", ""));
+function isRelationField(
+  typeName: string,
+  allModelNames: Set<string>,
+): boolean {
+  return (
+    allModelNames.has(typeName) || allModelNames.has(typeName.replace("[]", ""))
+  );
 }
 
 export function parsePrismaSchema(filePath: string): Schema[] {
@@ -115,16 +120,20 @@ export function parsePrismaContent(content: string): Schema[] {
     const body = modelMatch[2];
     const columns: Record<string, ParsedColumn> = {};
 
-    const lines = body.split("\n").map(l => l.trim()).filter(l => l && !l.startsWith("//") && !l.startsWith("@@"));
+    const lines = body
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("//") && !l.startsWith("@@"));
 
     for (const line of lines) {
       // Parse: fieldName Type? @attributes...
       const fieldMatch = line.match(/^(\w+)\s+(\w+)(\[\])?\s*(\?)?\s*(.*)?$/);
       if (!fieldMatch) continue;
 
-      const [, fieldName, typeName, isArray, isOptional, attrs = ""] = fieldMatch;
+      const [, fieldName, typeName, isArray, isOptional, attrs = ""] =
+        fieldMatch;
 
-      // Skip @id fields — SqliteBruv adds id automatically
+      // Skip @id fields — Arkilian_orm adds id automatically
       if (attrs.includes("@id")) continue;
 
       // Skip relation fields (type is another model or model[])
@@ -160,11 +169,12 @@ export function parsePrismaContent(content: string): Schema[] {
       // We detect by checking if fieldName minus "Id" suffix is a model name
       const possibleTarget = fieldName.replace(/Id$/, "");
       const targetModel = [...modelNames].find(
-        m => m.toLowerCase() === possibleTarget.toLowerCase() && m !== modelName
+        (m) =>
+          m.toLowerCase() === possibleTarget.toLowerCase() && m !== modelName,
       );
       if (targetModel) {
         // Convert model name to table name (lowercase plural-ish, but Prisma uses model name as table)
-        // SqliteBruv uses the schema.name which is the model block name lowercased
+        // Arkilian_orm uses the schema.name which is the model block name lowercased
         col.target = targetModel.toLowerCase() + "s";
       }
 
@@ -181,5 +191,7 @@ export function parsePrismaContent(content: string): Schema[] {
   }
 
   // Convert to Schema instances
-  return models.map(m => new Schema({ name: m.name, columns: m.columns as any }));
+  return models.map(
+    (m) => new Schema({ name: m.name, columns: m.columns as any }),
+  );
 }

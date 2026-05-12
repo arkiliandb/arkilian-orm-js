@@ -1,13 +1,12 @@
-# SQLiteBruv
+# Arkilian-orm
 
 A small, zero-dependency SQLite query builder for Bun with Prisma-style migrations. Supports local SQLite, Cloudflare D1, and Turso.
 
-[![npm version](https://badge.fury.io/js/sqlitebruv.svg)](https://www.npmjs.com/package/sqlitebruv)
+[![npm version](https://badge.fury.io/js/arkilian-orm-js.svg)](https://www.npmjs.com/package/arkilian-orm-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![npm](https://img.shields.io/npm/dm/sqlitebruv.svg)](https://www.npmjs.com/package/sqlitebruv)
+[![npm](https://img.shields.io/npm/dm/arkilian-orm-js.svg)](https://www.npmjs.com/package/arkilian-orm-js)
 
-<img src="https://github.com/FridayCandour/SQLiteBruv/blob/main/icon.png?raw=true" width="160" />
-
+<img src="https://avatars.githubusercontent.com/u/261335565?s=48&v=4" width="160" />
 
 Most Effective Query Builder and migration manager SQLite supporting D1/Turso and Bun's by default.
 
@@ -16,7 +15,7 @@ v2 now a full sqlite only orm, enjoy and support & contribute!
 ## Install
 
 ```bash
-bun add sqlitebruv
+bun add arkilian-orm
 ```
 
 ## Quick start
@@ -41,9 +40,9 @@ model Post {
 Initialize the database. Schema is auto-loaded from `./bruv/schema.prisma`:
 
 ```ts
-import { SqliteBruv } from "sqlitebruv";
+import { Arkilian_orm } from "arkilian-orm";
 
-const db = new SqliteBruv({
+const db = new Arkilian_orm({
   localFile: "./app.db",
 });
 ```
@@ -62,7 +61,7 @@ const one = await db.from("users").where("id = ?", id).getOne();
 
 ```ts
 // Cloudflare D1
-const db = new SqliteBruv({
+const db = new Arkilian_orm({
   D1Config: {
     accountId: process.env.CFAccountId,
     databaseId: process.env.D1databaseId,
@@ -71,7 +70,7 @@ const db = new SqliteBruv({
 });
 
 // Turso
-const db = new SqliteBruv({
+const db = new Arkilian_orm({
   TursoConfig: {
     url: process.env.TURSO_URL,
     authToken: process.env.TURSO_AUTH_TOKEN,
@@ -79,7 +78,7 @@ const db = new SqliteBruv({
 });
 
 // Local SQLite (default)
-const db = new SqliteBruv({
+const db = new Arkilian_orm({
   localFile: "./app.db",
 });
 ```
@@ -151,12 +150,12 @@ npx bruv-cli db push
 
 Connection is resolved from environment variables:
 
-| Env vars | Target |
-|----------|--------|
-| `TURSO_URL` + `TURSO_AUTH_TOKEN` | Turso |
-| `CFAccountId` + `D1databaseId` + `CFauthorizationToken` | D1 |
-| `DB_FILE` | Local file path |
-| _(none)_ | `./main.db` |
+| Env vars                                                | Target          |
+| ------------------------------------------------------- | --------------- |
+| `TURSO_URL` + `TURSO_AUTH_TOKEN`                        | Turso           |
+| `CFAccountId` + `D1databaseId` + `CFauthorizationToken` | D1              |
+| `DB_FILE`                                               | Local file path |
+| _(none)_                                                | `./main.db`     |
 
 `migrate dev` always targets `./bruv/dev.db` for local iteration.
 

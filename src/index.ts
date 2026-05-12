@@ -53,10 +53,10 @@ interface Query {
   */
   data?: any;
 }
- 
-// SqliteBruv class
 
-export class SqliteBruv<
+// Arkilian_orm class
+
+export class Arkilian_orm<
   T extends Record<string, Params> = Record<string, Params>,
 > {
   static migrationFolder = "./bruv/migrations";
@@ -124,23 +124,23 @@ export class SqliteBruv<
     //? warning
     if ([token, localFile, QueryMode].filter((v) => v).length === 0) {
       throw new Error(
-        "\nPlease pass any of \n1. LocalFile or \n2. token\nin SqliteBruv constructor",
+        "\nPlease pass any of \n1. LocalFile or \n2. token\nin Arkilian_orm constructor",
       );
     }
     if ([token, localFile, QueryMode].filter((v) => v).length > 1) {
       throw new Error(
-        "\nPlease only pass one of \n1. LocalFile or \n2. token\nin SqliteBruv constructor",
+        "\nPlease only pass one of \n1. LocalFile or \n2. token\nin Arkilian_orm constructor",
       );
     }
 
     // Resolve schema: use provided or auto-load from ./bruv/schema.prisma
     if (!schema || !schema.length) {
-      const schemaPath = join(process.cwd(), SqliteBruv.schemaFile);
+      const schemaPath = join(process.cwd(), Arkilian_orm.schemaFile);
       if (existsSync(schemaPath)) {
         schema = parsePrismaSchema(schemaPath);
       } else {
         throw new Error(
-          `No schema provided and ${SqliteBruv.schemaFile} not found.\nCreate ./bruv/schema.prisma with your schema definitions.`,
+          `No schema provided and ${Arkilian_orm.schemaFile} not found.\nCreate ./bruv/schema.prisma with your schema definitions.`,
         );
       }
     }
@@ -201,7 +201,7 @@ export class SqliteBruv<
     tableName: string,
   ) {
     this._tableName = tableName;
-    return this as unknown as SqliteBruv<Model>;
+    return this as unknown as Arkilian_orm<Model>;
   }
   // Read queries
   select(...columns: string[]) {
@@ -304,7 +304,7 @@ export class SqliteBruv<
   }
   insert(data: T): Promise<T> {
     //  @ts-ignore
-    data.id = Id(); // sqlitebruv provide you with string id by default
+    data.id = Id(); // Arkilian_orm provide you with string id by default
     const attributes = Object.keys(data);
     const columns = attributes.join(", ");
     const placeholders = attributes.map(() => "?").join(", ");
@@ -531,7 +531,7 @@ export class SqliteBruv<
 export class Schema<Model extends Record<string, any> = {}> {
   private string: string = "";
   name: string;
-  db?: SqliteBruv;
+  db?: Arkilian_orm;
   columns: { [x in keyof Omit<Model, "id">]: SchemaColumnOptions };
   constructor(def: BruvSchema<Model>) {
     this.name = def.name;
@@ -541,7 +541,7 @@ export class Schema<Model extends Record<string, any> = {}> {
     if (this.db?.loading) {
       throw new Error("Database not loaded yet!!");
     }
-    return this.db!.from(this.name) as SqliteBruv<Model>;
+    return this.db!.from(this.name) as Arkilian_orm<Model>;
   }
   queryRaw(raw: string) {
     return this.db?.from(this.name).raw(raw, [])!;
@@ -595,7 +595,7 @@ export class Schema<Model extends Record<string, any> = {}> {
   }
 }
 
-async function getSchema(db: SqliteBruv<{}>): Promise<rawSchema[] | void> {
+async function getSchema(db: Arkilian_orm<{}>): Promise<rawSchema[] | void> {
   if (db.loading) await db.loading;
   // Internal/system tables to exclude from schema diffing
   const INTERNAL_TABLES = new Set(["sqlite_sequence", "_bruv_migrations"]);
@@ -772,7 +772,7 @@ export async function createMigrationFile(
     .replace("T", "");
   const safeName = name.replace(/[^a-z0-9_]/gi, "_").toLowerCase();
   const filename = `${ts}_${safeName}.sql`;
-  const filepath = join(SqliteBruv.migrationFolder, filename);
+  const filepath = join(Arkilian_orm.migrationFolder, filename);
 
   const content = `-- --> up
 ${migration.up.trim()}
@@ -781,7 +781,7 @@ ${migration.up.trim()}
 ${migration.down.trim()}
 `;
 
-  await mkdir(SqliteBruv.migrationFolder, { recursive: true });
+  await mkdir(Arkilian_orm.migrationFolder, { recursive: true });
   await writeFile(filepath, content);
   return filename;
 }

@@ -1,5 +1,5 @@
 {
-  "name": "sqlitebruv",
+  "name": "arkilian-orm",
   "description": "A Simple and Efficient Query Builder SQLite supporting D1/Turso and Bun's by default",
   "version": "2.0.0",
   "main": "dist/index.js",
@@ -13,7 +13,7 @@
     "dist/parser.js"
   ],
   "bin": {
-    "sqlitebruv": "dist/cli.js"
+    "arkilian-orm": "dist/cli.js"
   },
   "scripts": {
     "compile": " rm -rf dist && tsc"
@@ -21,7 +21,7 @@
   "keywords": [
     "SQL",
     "SQLite",
-    "sqlitebruv",
+    "arkilian-orm",
     "D1",
     "bun",
     "query"
