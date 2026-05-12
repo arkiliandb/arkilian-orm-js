@@ -23,6 +23,10 @@ import {
 import { mkdir, writeFile, unlink } from "node:fs/promises";
 import { readdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { join } from "path";
+import { config } from "dotenv";
+config({ quiet: true });
+ 
+
 
 const MIGRATIONS_TABLE = "_bruv_migrations";
 const FOLDER = SqliteBruv.migrationFolder;
@@ -37,8 +41,7 @@ function resolveDb(schema: Schema[], dev: boolean): SqliteBruv {
       createMigrations: false,
     });
   }
-  const token = process.env["ARKILIAN_DB_TOKEN"];
-
+  const token = process.env["ARKILIAN_DB_TOKEN"]; 
   if (token) {
     return new SqliteBruv({
       schema,
@@ -77,11 +80,16 @@ async function loadSchema(): Promise<Schema[]> {
 
 // --- Migration helpers ---
 async function ensureTable(db: SqliteBruv) {
-  await db.raw(`CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
+  await db.run(
+    `CREATE TABLE IF NOT EXISTS ${MIGRATIONS_TABLE} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )`);
+  )`,
+    [],
+  );
+  const data = await db.raw(`SELECT * FROM ${MIGRATIONS_TABLE}`);
+  console.log({ data });
 }
 
 async function getApplied(db: SqliteBruv): Promise<Set<string>> {
@@ -102,13 +110,14 @@ async function migrateDev(db: SqliteBruv, name: string, schema: Schema[]) {
     process.exit(1);
   }
 
-  const tempPath = join(process.cwd(), ".bruv_temp.sqlite");
+  const tempPath = "./bruv/.bruv_temp.sqlite";
   const cloned = schema.map((s) => s._clone());
   const tempDb = new SqliteBruv({
     schema: cloned,
     localFile: tempPath,
     createMigrations: false,
   });
+  ensureTable(tempDb);
   await tempDb.loading;
   cloned.forEach((s) => {
     s.db = tempDb;
@@ -245,7 +254,7 @@ async function migrateStatus(db: SqliteBruv) {
 }
 
 async function dbPush(db: SqliteBruv, schema: Schema[]) {
-  const tempPath = join(process.cwd(), ".bruv_temp.sqlite");
+  const tempPath = "bruv/.bruv_temp.sqlite";
   const cloned = schema.map((s) => s._clone());
   const tempDb = new SqliteBruv({
     schema: cloned,
@@ -315,8 +324,8 @@ if (!cmd || args.includes("--help") || args.includes("-h")) {
 
 const schema = await loadSchema();
 const db = resolveDb(schema, sub === "dev");
-await db.loading;
-
+await ensureTable(db);
+await db.loading; 
 if (cmd === "migrate") {
   switch (sub) {
     case "dev":

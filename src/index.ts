@@ -56,13 +56,15 @@ interface Query {
  
 // SqliteBruv class
 
-export class SqliteBruv<T extends Record<string, Params> = Record<string, Params>> {
+export class SqliteBruv<
+  T extends Record<string, Params> = Record<string, Params>,
+> {
   static migrationFolder = "./bruv/migrations";
   static schemaFile = "./bruv/schema.prisma";
   /**
    * @internal
    */
-  db?: any;
+  db: any;
   /**
    * @internal
    */
@@ -75,10 +77,11 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
   private _limit?: number;
   private _offset?: number;
   private _orderBy?: { column: string; direction: "ASC" | "DESC" };
-  private _logging: boolean = false;
+  private _logging: boolean = true;
   private _hotCache: Record<string | number, any> = {};
   private _token?: string;
   private _QueryMode?: boolean = false;
+  private test?: boolean = false;
   private readonly MAX_PARAMS = 100;
   private readonly ALLOWED_OPERATORS = [
     "=",
@@ -164,6 +167,7 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
         this._localFile = true;
         this._localFile_path = localFile;
         if (localFile.includes("bruv/")) {
+          this.test = true;
           this.db = new Database(localFile, {
             create: true,
             strict: true,
@@ -171,6 +175,8 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
         } else {
           this.db = new Arkilian(token, localFile);
         }
+      } else {
+        this.db = new Arkilian(token, localFile);
       }
 
       // setup
@@ -178,8 +184,8 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
         this._QueryMode = true;
       }
       //? logger setup
-      if (logging === true) {
-        this._logging = true;
+      if (logging === false) {
+        this._logging = false;
       }
 
       // init each schema
@@ -463,34 +469,51 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
    */
   async run(
     query: string,
-    params: (string | number | null | boolean)[],
+    params: (string | number | null | boolean)[] = [],
     { single, cacheName }: { single?: boolean; cacheName?: string } = {},
   ) {
     if (this.loading) await this.loading;
     if (this._QueryMode) return { query, params } as any;
     if (this._logging) {
-      console.log({ query, params });
+      console.log({ query, params, single });
     }
     // local db
-    if (single === true) {
-      if (cacheName) {
-        return this.cacheResponse(
-          this.db.query(query).get(...params),
-          cacheName,
-        );
+    if (this.test) {
+      if (single === true) {
+        if (cacheName) {
+          return this.cacheResponse(
+            this.db.query(query).get(...params),
+            cacheName,
+          );
+        }
+        return this.db.query(query).get(...params);
       }
-      return this.db.query(query).get(...params);
-    }
-    if (single === false) {
-      if (cacheName) {
-        return this.cacheResponse(
-          this.db.prepare(query).all(...params),
-          cacheName,
-        );
+      if (single === false) {
+        if (cacheName) {
+          return this.cacheResponse(
+            this.db.prepare(query).all(...params),
+            cacheName,
+          );
+        }
+        return this.db.prepare(query).all(...params);
       }
-      return this.db.prepare(query).all(...params);
+      return this.db.prepare(query).run(...params);
+    } else {
+      // Arkilian
+      if (single === true) {
+        if (cacheName) {
+          return this.cacheResponse(this.db.all(query, params), cacheName);
+        }
+        return this.db.all(query, params);
+      }
+      if (single === false) {
+        if (cacheName) {
+          return this.cacheResponse(this.db.all(query, params), cacheName);
+        }
+        return this.db.all(query, params);
+      }
+      return this.db.run(query, params);
     }
-    return this.db.prepare(query).run(...params);
   }
 
   raw(raw: string, params: (string | number | boolean)[] = []) {
