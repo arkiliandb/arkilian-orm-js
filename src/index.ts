@@ -3,7 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { parsePrismaSchema } from "./parser.js";
-
+import Arkilian from "arkilian";
 // TYPES:
 
 interface BruvSchema<Model> {
@@ -53,17 +53,7 @@ interface Query {
   */
   data?: any;
 }
-
-interface TursoConfig {
-  url: string;
-  authToken: string;
-} 
-interface D1Config {
-  accountId: string;
-  databaseId: string;
-  apiKey: string;
-}
-
+ 
 // SqliteBruv class
 
 export class SqliteBruv<T extends Record<string, Params> = Record<string, Params>> {
@@ -87,8 +77,7 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
   private _orderBy?: { column: string; direction: "ASC" | "DESC" };
   private _logging: boolean = false;
   private _hotCache: Record<string | number, any> = {};
-  private _turso?: TursoConfig;
-  private _D1?: TursoConfig;
+  private _token?: string;
   private _QueryMode?: boolean = false;
   private readonly MAX_PARAMS = 100;
   private readonly ALLOWED_OPERATORS = [
@@ -118,14 +107,11 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
   constructor({
     logging,
     schema,
-    D1Config,
-    TursoConfig,
+    token,
     localFile,
     QueryMode,
-    createMigrations,
   }: {
-    D1Config?: D1Config;
-    TursoConfig?: TursoConfig;
+    token?: string;
     QueryMode?: boolean;
     localFile?: string;
     schema?: Schema[];
@@ -133,19 +119,14 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
     createMigrations?: boolean;
   }) {
     //? warning
-    if (
-      [D1Config, TursoConfig, localFile, QueryMode].filter((v) => v).length ===
-      0
-    ) {
+    if ([token, localFile, QueryMode].filter((v) => v).length === 0) {
       throw new Error(
-        "\nPlease pass any of \n1. LocalFile or \n2. D1Config or \n3. TursoConfig\nin SqliteBruv constructor",
+        "\nPlease pass any of \n1. LocalFile or \n2. token\nin SqliteBruv constructor",
       );
     }
-    if (
-      [D1Config, TursoConfig, localFile, QueryMode].filter((v) => v).length > 1
-    ) {
+    if ([token, localFile, QueryMode].filter((v) => v).length > 1) {
       throw new Error(
-        "\nPlease only pass one of \n1. LocalFile or \n2. D1Config or \n3. TursoConfig\nin SqliteBruv constructor",
+        "\nPlease only pass one of \n1. LocalFile or \n2. token\nin SqliteBruv constructor",
       );
     }
 
@@ -177,25 +158,21 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
       }
       // setup db
       if (localFile) {
+        if (!existsSync(join(process.cwd(), "./bruv"))) {
+          mkdirSync(join(process.cwd(), "./bruv"));
+        }
         this._localFile = true;
         this._localFile_path = localFile;
-        this.db = new Database(localFile, {
-          create: true,
-          strict: true,
-        });
+        if (localFile.includes("bruv/")) {
+          this.db = new Database(localFile, {
+            create: true,
+            strict: true,
+          });
+        } else {
+          this.db = new Arkilian(token, localFile);
+        }
       }
-      //? D1 setup
-      if (D1Config) {
-        const { accountId, databaseId, apiKey } = D1Config;
-        this._D1 = {
-          url: `https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${databaseId}/query`,
-          authToken: apiKey,
-        };
-      }
-      //? Turso setup
-      if (TursoConfig) {
-        this._turso = TursoConfig;
-      }
+
       // setup
       if (QueryMode === true) {
         this._QueryMode = true;
@@ -494,43 +471,6 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
     if (this._logging) {
       console.log({ query, params });
     }
-    // turso
-    if (this._turso) {
-      let results = await this.executeTursoQuery(query, params);
-
-      if (single) {
-        results = results[0];
-      }
-      if (cacheName) {
-        return this.cacheResponse(results, cacheName);
-      }
-      return results;
-    }
-    // d1
-    if (this._D1) {
-      const res = await fetch(this._D1.url, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this._D1.authToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ sql: query, params }),
-      });
-      const data = await res.json();
-      let result;
-      if (data.success && data.result[0].success) {
-        if (single) {
-          result = data.result[0].results[0];
-        } else {
-          result = data.result[0].results;
-        }
-        if (cacheName) {
-          return this.cacheResponse(result, cacheName);
-        }
-        return result;
-      }
-      throw new Error(JSON.stringify(data.errors));
-    }
     // local db
     if (single === true) {
       if (cacheName) {
@@ -552,52 +492,7 @@ export class SqliteBruv<T extends Record<string, Params> = Record<string, Params
     }
     return this.db.prepare(query).run(...params);
   }
-  private async executeTursoQuery(
-    query: string,
-    params: any[] = [],
-  ): Promise<any> {
-    if (!this._turso) {
-      throw new Error("Turso configuration not found");
-    }
 
-    const response = await fetch(this._turso.url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this._turso.authToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        statements: [
-          {
-            q: query,
-            params: params,
-          },
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      console.error(await response.text());
-      throw new Error(`Turso API error: ${response.statusText}`);
-    }
-
-    const results = (await response.json())[0];
-    const { columns, rows } = results?.results || {};
-    if (results.error) {
-      throw new Error(`Turso API error: ${results.error}`);
-    }
-
-    // Map each row to an object
-    const transformedRows = rows.map((row: any[]) => {
-      const rowObject: any = {};
-      columns.forEach((column: string, index: number) => {
-        rowObject[column] = row[index];
-      });
-      return rowObject;
-    });
-
-    return transformedRows;
-  }
   raw(raw: string, params: (string | number | boolean)[] = []) {
     const isSelect = raw.trimStart().toUpperCase().startsWith("SELECT");
     return this.run(raw, params, { single: isSelect ? false : undefined });

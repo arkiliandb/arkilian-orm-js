@@ -37,50 +37,19 @@ function resolveDb(schema: Schema[], dev: boolean): SqliteBruv {
       createMigrations: false,
     });
   }
-  const tursoUrl = process.env["TURSO_URL"];
-  const tursoToken = process.env["TURSO_AUTH_TOKEN"];
-  const cfAccount = process.env["CFAccountId"];
-  const d1Database = process.env["D1databaseId"];
-  const cfToken = process.env["CFauthorizationToken"];
-  const localFile = process.env["DB_FILE"];
+  const token = process.env["ARKILIAN_DB_TOKEN"];
 
-  if (
-    localFile &&
-    !localFile.endsWith(".db") &&
-    !localFile.endsWith(".sqlite") &&
-    !localFile.endsWith(".sqlite3")
-  ) {
-    console.log(localFile);
-
-    console.error("Error: DB_FILE must point to a .db/.sqlite/.sqlite3 file");
-    process.exit(1);
-  }
-
-  if (tursoUrl && tursoToken) {
+  if (token) {
     return new SqliteBruv({
       schema,
-      TursoConfig: { url: tursoUrl, authToken: tursoToken },
+      token,
       createMigrations: false,
     });
+  } else {
+    throw new Error(
+      "No database token found. Set ARKILIAN_DB_TOKEN or use 'bun bruv migrate dev'",
+    );
   }
-
-  if (cfAccount && d1Database && cfToken) {
-    return new SqliteBruv({
-      schema,
-      D1Config: {
-        accountId: cfAccount,
-        databaseId: d1Database,
-        apiKey: cfToken,
-      },
-      createMigrations: false,
-    });
-  }
-
-  return new SqliteBruv({
-    schema,
-    localFile: localFile || "main.db",
-    createMigrations: false,
-  });
 }
 
 // --- Load schema from prisma/schema.prisma ---
