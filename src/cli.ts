@@ -60,7 +60,7 @@ async function loadSchema(): Promise<Schema[]> {
     await mkdir(join(process.cwd(), "bruv"), { recursive: true });
     writeFileSync(
       absPath,
-      `generator client {\n  provider = "sqlite-bruv"\n}\n\nmodel User {
+      `generator client {\n  provider = "arkilian-orm"\n}\n\nmodel User {
   id    String @id @default(uuid())
   email String @unique
   name  String?
