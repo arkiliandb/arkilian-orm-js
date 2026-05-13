@@ -6,11 +6,11 @@
  * Reads connection info from env vars with local SQLite as default.
  *
  * Commands:
- *   bun bruv migrate dev --name <name>   Generate + apply migration
- *   bun bruv migrate deploy              Apply all pending migrations
- *   bun bruv migrate reset               Rollback last migration
- *   bun bruv migrate status              Show applied/pending migrations
- *   bun bruv db push                     Push schema directly (no migration file)
+ *    npx arkilian-orm migrate dev --name <name>   Generate + apply migration
+ *    npx arkilian-orm migrate deploy              Apply all pending migrations
+ *    npx arkilian-orm migrate reset               Rollback last migration
+ *    npx arkilian-orm migrate status              Show applied/pending migrations
+ *    npx arkilian-orm db push                     Push schema directly (no migration file)
  */
 
 import {
@@ -48,7 +48,7 @@ function resolveDb(schema: Schema[], dev: boolean): Arkilian_orm {
     });
   } else {
     throw new Error(
-      "No database token found. Set ARKILIAN_DB_TOKEN or use 'bun bruv migrate dev'",
+      "No database token found. Set ARKILIAN_DB_TOKEN or use   npx arkilian-orm migrate dev'",
     );
   }
 }
@@ -103,7 +103,7 @@ async function getApplied(db: Arkilian_orm): Promise<Set<string>> {
 async function migrateDev(db: Arkilian_orm, name: string, schema: Schema[]) {
   if (!name) {
     console.error(
-      "Error: Migration needs a name.\n  Usage: bun bruv migrate dev --name <name>",
+      "Error: Migration needs a name.\n  Usage:  npx arkilian-orm migrate dev --name <name>",
     );
     process.exit(1);
   }
@@ -308,11 +308,11 @@ const HELP = `
 Arkilian-orm CLI
 
 Usage:
-  bun bruv migrate dev --name <name>   Create and apply a new migration
-  bun bruv migrate deploy              Apply all pending migrations (production)
-  bun bruv migrate reset               Rollback the last migration
-  bun bruv migrate status              Show migration status
-  bun bruv db push                     Push schema directly without migration files
+  npx arkilian-orm migrate dev --name <name>   Create and apply a new migration
+  npx arkilian-orm migrate deploy              Apply all pending migrations (production)
+  npx arkilian-orm migrate reset               Rollback the last migration
+  npx arkilian-orm migrate status              Show migration status
+  npx arkilian-orm db push                     Push schema directly without migration files
 `;
 
 if (!cmd || args.includes("--help") || args.includes("-h")) {
