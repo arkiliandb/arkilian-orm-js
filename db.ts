@@ -2,25 +2,32 @@ import { Arkilian_orm } from "./src/index.ts";
 
 // Schema is auto-loaded from ./bruv/schema.prisma
 export const db = new Arkilian_orm({
-  localFile: "sample.sqlite",
-  logging: true,
+  token: "2dwef",
+  // localFile: "sample.sqlite",
+  logging: false,
 });
 
 // Insert
-await db
+await db.from("users").insert({
+  name: "John Doe",
+  email: "john@example.com",
+  age: 99,
+  country: "sourthanton",
+});
+const john = await db
   .from("users")
-  .insert({ name: "John Doe", email: "john@example.com" })
-  .then((changes) => {
-    console.log({ changes });
-  });
+  .select("age , id, email, country, name")
+  .where("email = ?", "john@example.com")
+  .getOne();
+console.log({ john });
 
 // Update
 await db
   .from("users")
-  .where("id = ?", 1)
+  .where("id = ?", john.id)
   .update({ name: "Jane Doe" })
   .then((changes) => {
-    console.log({ changes });
+    // console.log({ changes });
   });
 
 // Search
@@ -34,13 +41,13 @@ await db
   });
 
 // Delete
-await db
-  .from("users")
-  .where("id = ?", 1)
-  .delete()
-  .then((changes) => {
-    console.log({ changes });
-  });
+// await db
+//   .from("users")
+//   .where("id = ?", 1)
+//   .delete()
+//   .then((changes) => {
+//     // console.log({ changes });
+//   });
 
 // Get all users
 db.from("users")
