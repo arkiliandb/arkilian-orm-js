@@ -1,16 +1,13 @@
 # Arkilian-orm
 
-A small, zero-dependency SQLite query builder for Bun with Prisma-style migrations. Supports local SQLite, Cloudflare D1, and Turso.
+💃 Javascript ORM for Arkilian database visit arkilian.com for more info
 
 [![npm version](https://badge.fury.io/js/arkilian-orm-js.svg)](https://www.npmjs.com/package/arkilian-orm-js)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![npm](https://img.shields.io/npm/dm/arkilian-orm-js.svg)](https://www.npmjs.com/package/arkilian-orm-js)
 
-<img src="https://avatars.githubusercontent.com/u/261335565?s=48&v=4" width="160" />
-
-Most Effective Query Builder and migration manager SQLite supporting D1/Turso and Bun's by default.
-
-v2 now a full sqlite only orm, enjoy and support & contribute!
+<img src="https://avatars.githubusercontent.com/u/261335565?s=48&v=4" width="120" />
+  
 
 ## Install
 
@@ -152,8 +149,7 @@ Connection is resolved from environment variables:
 
 | Env vars                                                | Target          |
 | ------------------------------------------------------- | --------------- |
-| `TURSO_URL` + `TURSO_AUTH_TOKEN`                        | Turso           |
-| `CFAccountId` + `D1databaseId` + `CFauthorizationToken` | D1              |
+| `ARKILIAN_DATABASE_TOKEN`                        | Turso           | 
 | `DB_FILE`                                               | Local file path |
 | _(none)_                                                | `./main.db`     |
 

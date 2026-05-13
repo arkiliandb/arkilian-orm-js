@@ -1,7 +1,7 @@
 {
   "name": "arkilian-orm",
-  "description": "A Simple and Efficient Query Builder SQLite supporting D1/Turso and Bun's by default",
-  "version": "2.0.0",
+  "description": "💃 Javascript ORM for Arkilian database visit arkilian.com for more info",
+  "version": "1.0.0",
   "main": "dist/index.js",
   "type": "module",
   "files": [
@@ -26,7 +26,7 @@
     "bun",
     "query"
   ],
-  "author": "",
+  "author": "Arkilian",
   "license": "MIT",
   "devDependencies": {
     "@types/bun": "^1.1.14",
