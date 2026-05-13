@@ -86,8 +86,8 @@ async function ensureTable(db: Arkilian_orm) {
   )`,
     [],
   );
-  const data = await db.from(MIGRATIONS_TABLE).where("id = ?", 2).getOne();
-  console.log({ data });
+  // const data = await db.from(MIGRATIONS_TABLE).where("id = ?", 2).getOne();
+  // console.log({ data });
 }
 
 async function getApplied(db: Arkilian_orm): Promise<Set<string>> {
